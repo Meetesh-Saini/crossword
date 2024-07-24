@@ -23,6 +23,8 @@ class Crossword {
     private words: string[];
     private used_words = new Set<string>();
     private current: CrosswordEntry[] = [];
+    private top_left: Coords = { x: 0, y: 0 };
+    private bottom_right: Coords = { x: 0, y: 0 };
 
     constructor(words: string[]) {
         this.words = words;
@@ -45,16 +47,6 @@ class Crossword {
         return word;
     }
 
-    d() {
-        [
-            ["apple", "h", "", 0, 0, [0, 0], [4, 0]],
-            ["lion", "v", "apple", 3, 0, [3, 0], [3, -3]],
-            [],
-            // ["motion", "h", "lion", 2, 1, [2, -2], [7, -2]],
-            // ["bat", "v", "motion", 2, 2, [4, 0], [4, -2]],
-        ];
-    }
-
     private overlappingWord(word: string, index: number = 0) {
         let set_word = new Set(word);
         for (let i = index; i < this.current.length; i++) {
@@ -69,57 +61,97 @@ class Crossword {
         }
         return null;
     }
-    // @ts-ignore
-    private intersectionPoints(
-        matchStart: Coords,
-        matchEnd: Coords,
-        wordStart: Coords,
-        wordEnd: Coords
-    ): Coords[] | boolean {
-        let wordDir = wordStart.x === wordEnd.x;
-        let matchDir = matchStart.x === matchEnd.x;
-        let points: Coords[] = [];
 
+    private lies_in(x1: number, x2: number, p: number): boolean {
+        return (p >= x1 && p <= x2) || (p <= x1 && p >= x2);
+    }
+
+    private validIntersection(wordEntry: CrosswordEntry, matchEntry: CrosswordEntry): boolean {
         // both lines are parallel
-        if (wordDir === matchDir) {
-            if ((wordDir && wordStart.x !== matchStart.x) || (!wordDir && wordStart.y !== matchStart.y)) {
-                return true;
+        if (wordEntry.dir == matchEntry.dir) {
+            let invalid: boolean;
+            if (wordEntry.dir == Direction.HORIZONTAL) {
+                invalid =
+                    [-1, 0, 1].includes(wordEntry.start.y - matchEntry.start.y) &&
+                    (this.lies_in(matchEntry.start.x - 1, matchEntry.end.x + 1, wordEntry.start.x) ||
+                        this.lies_in(matchEntry.start.x - 1, matchEntry.end.x + 1, wordEntry.end.x) ||
+                        this.lies_in(wordEntry.start.x, wordEntry.end.x, matchEntry.start.x - 1) ||
+                        this.lies_in(wordEntry.start.x, wordEntry.end.x, matchEntry.end.x + 1));
+            } else {
+                invalid =
+                    [-1, 0, 1].includes(wordEntry.start.x - matchEntry.start.x) &&
+                    (this.lies_in(matchEntry.start.y + 1, matchEntry.end.y - 1, wordEntry.start.y) ||
+                        this.lies_in(matchEntry.start.y + 1, matchEntry.end.y - 1, wordEntry.end.y) ||
+                        this.lies_in(wordEntry.start.y, wordEntry.end.y, matchEntry.start.y + 1) ||
+                        this.lies_in(wordEntry.start.y, wordEntry.end.y, matchEntry.end.y - 1));
             }
 
-            if (
-                (wordDir &&
-                    wordStart.x === matchStart.x &&
-                    (wordEnd.y > matchStart.y + 1 || wordStart.y < matchEnd.y - 1)) ||
-                (!wordDir &&
-                    wordStart.y === matchStart.y &&
-                    (wordEnd.x < matchStart.x - 1 || wordStart.x > matchEnd.x + 1))
-            ) {
-                return true;
-            }
+            return !invalid;
+        }
+        // lines are not parallel
+        else {
+            if (wordEntry.dir == Direction.HORIZONTAL) {
+                // Far up or down
+                if (wordEntry.start.y - matchEntry.start.y > 1 || wordEntry.start.y - matchEntry.end.y < -1)
+                    return true;
 
-            if (
-                (wordDir &&
-                    wordStart.x === matchStart.x &&
-                    ((wordStart.y > matchStart.y && wordEnd.y <= matchStart.y && wordEnd.y > matchEnd.y) ||
-                        (wordEnd.y < matchEnd.y && wordStart.y < matchStart.y && wordStart.y >= matchEnd.y))) ||
-                (!wordDir &&
-                    wordStart.y === matchStart.y &&
-                    ((wordStart.x < matchStart.x && wordEnd.x >= matchStart.x && wordEnd.x < matchEnd.x) ||
-                        (wordEnd.x > matchEnd.x && wordStart.x > matchStart.x && wordStart.x <= matchEnd.x)))
-            ) {
+                // Y-axis is close. Check X-axis.
+                if (wordEntry.start.y - matchEntry.start.y == 1 || wordEntry.start.y - matchEntry.end.y == -1)
+                    return !this.lies_in(wordEntry.start.x, wordEntry.end.x, matchEntry.start.x);
+
+                // Y-axis lies in between. Check if X-axis is close.
+                if (wordEntry.start.x - matchEntry.start.x == 1 || wordEntry.end.x - matchEntry.start.x == -1)
+                    return false;
+
+                // Y-axis lies in between but far right or left.
+                if (wordEntry.start.x - matchEntry.start.x > 1 || wordEntry.end.x - matchEntry.start.x < -1)
+                    return true;
+
+                // Intersects at one point. Check the intersection.
+                return (
+                    wordEntry.word[matchEntry.start.x - wordEntry.start.x] ==
+                    matchEntry.word[matchEntry.start.y - wordEntry.start.y]
+                );
+            } else {
+                // Far left or right
+                if (wordEntry.start.x - matchEntry.start.x < -1 || wordEntry.start.x - matchEntry.end.x > 1)
+                    return true;
+
+                // X-axis is close. Check Y-axis.
+                if (wordEntry.start.x - matchEntry.start.x == -1 || wordEntry.start.x - matchEntry.end.x == 1)
+                    return !this.lies_in(wordEntry.start.y, wordEntry.end.y, matchEntry.start.y);
+
+                // X-axis lies in between. Check if Y-axis is close.
+                if (wordEntry.start.y - matchEntry.start.y == -1 || wordEntry.end.y - matchEntry.start.y == 1)
+                    return false;
+
+                // X-axis lies in between but far up or down.
+                if (wordEntry.start.y - matchEntry.start.y < -1 || wordEntry.end.y - matchEntry.start.y > 1)
+                    return true;
+
+                // Intersects at one point. Check the intersection.
+                return (
+                    wordEntry.word[wordEntry.start.y - matchEntry.start.y] ==
+                    matchEntry.word[wordEntry.start.x - matchEntry.start.x]
+                );
+            }
+        }
+    }
+
+    private checkPosition(entry: CrosswordEntry): boolean {
+        for (let index = 0; index < this.current.length; index++) {
+            const element = this.current[index];
+            // return if not valid
+            if (!this.validIntersection(entry, element)) {
                 return false;
             }
         }
-        return points;
+        return true;
     }
 
-    private checkPosition(entry: CrosswordEntry) {
-        return entry;
-    }
-
-    add(word: string) {
+    add(word: string): boolean {
         if (this.current.length === 0) {
-            this.current.push({
+            let newCrosswordEntry: CrosswordEntry = {
                 word: word,
                 dir: Direction.HORIZONTAL,
                 match: "",
@@ -128,7 +160,13 @@ class Crossword {
                 start: { x: 0, y: 0 },
                 end: { x: word.length - 1, y: 0 },
                 set: new Set(word),
-            });
+            };
+
+            this.current.push(newCrosswordEntry);
+
+            this.top_left = Object.assign({}, newCrosswordEntry.start);
+            this.bottom_right = Object.assign({}, newCrosswordEntry.end);
+
             console.log({
                 word: word,
                 dir: Direction.HORIZONTAL,
@@ -139,15 +177,16 @@ class Crossword {
                 end: { x: word.length - 1, y: 0 },
                 set: new Set(word),
             });
-            return;
+            return true;
         }
+
         let overlappingWordIndex = 0;
         let match: { index: number; common: string[] } | null;
 
         do {
             match = this.overlappingWord(word, overlappingWordIndex);
 
-            if (match === null) return;
+            if (match === null) return false;
 
             for (let i = 0; i < match.common.length; i++) {
                 const commonChar = match.common[i];
@@ -172,12 +211,12 @@ class Crossword {
                             direction = Direction.HORIZONTAL;
                             start = {
                                 x: commonWordEntry.start.x - wordCharIndex,
-                                y: commonWordEntry.start.y + matchCharIndex,
+                                y: commonWordEntry.start.y - matchCharIndex,
                             };
                             end = { x: start.x + word.length - 1, y: start.y };
                         }
 
-                        this.checkPosition({
+                        let newCrosswordEntry: CrosswordEntry = {
                             word: word,
                             dir: direction,
                             at: matchCharIndex,
@@ -186,7 +225,8 @@ class Crossword {
                             start: start,
                             end: end,
                             set: new Set(word),
-                        });
+                        };
+                        let validEntry = this.checkPosition(newCrosswordEntry);
 
                         console.log({
                             word: word,
@@ -198,12 +238,26 @@ class Crossword {
                             end: end,
                             set: new Set(word),
                         });
+                        console.log("wordCharIndex", wordCharIndex);
+                        console.log("matchCharIndex", matchCharIndex);
+
+                        if (validEntry) {
+                            this.current.push(newCrosswordEntry);
+                            console.log("valid");
+                            this.top_left.x = Math.min(this.top_left.x, newCrosswordEntry.start.x);
+                            this.top_left.y = Math.max(this.top_left.y, newCrosswordEntry.start.y);
+                            this.bottom_right.x = Math.max(this.bottom_right.x, newCrosswordEntry.end.x);
+                            this.bottom_right.y = Math.min(this.bottom_right.y, newCrosswordEntry.end.y);
+                            return true;
+                        }
                     }
                 }
             }
 
             overlappingWordIndex = match.index + 1;
         } while (match != null);
+
+        return false;
     }
 
     make() {
@@ -212,14 +266,52 @@ class Crossword {
             this.add(word);
         }
     }
+
+    clear() {
+        this.used_words = new Set<string>();
+        this.current = [];
+        this.top_left = { x: 0, y: 0 };
+        this.bottom_right = { x: 0, y: 0 };
+    }
+
+    show() {
+        const n = this.bottom_right.x - this.top_left.x + 1;
+        const m = this.top_left.y - this.bottom_right.y + 1;
+
+        let board = [...Array(m)].map((_) => Array<string>(n).fill(" "));
+
+        for (let i = 0; i < this.current.length; i++) {
+            const element = this.current[i];
+            for (let j = 0; j < element.word.length; j++) {
+                const char = element.word[j];
+
+                const row = this.top_left.y - element.start.y + +(Direction.VERTICAL == element.dir) * j;
+                const col = element.start.x - this.top_left.x + +(Direction.HORIZONTAL == element.dir) * j;
+
+                board[row][col] = char;
+            }
+        }
+
+        let display = board.map((x) => x.join(" ")).join("\n");
+
+        console.log(board);
+        console.log(this.top_left);
+        console.log(this.bottom_right);
+        console.log(display);
+    }
 }
 
 export { Direction, Crossword };
 
 /**
- *
+ *          b
  *          a p p l e
- *                i
+ *          t     i     t
  *              m o t i o n
- *                n
+ *                n     i
+ *                      l
+ *                      e
+ *                      t
+ *
+ *
  */
