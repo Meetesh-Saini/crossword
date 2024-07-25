@@ -274,7 +274,7 @@ class Crossword {
         this.bottom_right = { x: 0, y: 0 };
     }
 
-    show() {
+    show(): string[][] {
         const n = this.bottom_right.x - this.top_left.x + 1;
         const m = this.top_left.y - this.bottom_right.y + 1;
 
@@ -298,6 +298,47 @@ class Crossword {
         console.log(this.top_left);
         console.log(this.bottom_right);
         console.log(display);
+
+        return board;
+    }
+
+    randomize(): string[][] {
+        const n = this.bottom_right.x - this.top_left.x + 1;
+        const m = this.top_left.y - this.bottom_right.y + 1;
+
+        let board = [...Array(m)].map((_) => Array<string>(n).fill(" "));
+
+        for (let i = 0; i < this.current.length; i++) {
+            const element = this.current[i];
+            let choose = Math.floor(Math.random() * 2) + 1;
+            for (let j = 0; j < element.word.length; j++) {
+                const char = element.word[j];
+
+                const row = this.top_left.y - element.start.y + +(Direction.VERTICAL == element.dir) * j;
+                const col = element.start.x - this.top_left.x + +(Direction.HORIZONTAL == element.dir) * j;
+
+                board[row][col] = choose ? "#" : char;
+                console.log(choose);
+                choose = !choose ? Math.floor(Math.random() * 2) + 1 : --choose;
+            }
+        }
+        let display = board.map((x) => x.join(" ")).join("\n");
+        console.log(this.top_left);
+        console.log(this.bottom_right);
+        console.log(display);
+        return board;
+    }
+
+    check(word: string): CrosswordEntry | null {
+        for (let index = 0; index < this.current.length; index++) {
+            const element = this.current[index];
+            if (element.word == word) return element;
+        }
+        return null;
+    }
+
+    getCorners(): { topleft: Coords; bottomright: Coords } {
+        return { topleft: Object.assign({}, this.top_left), bottomright: Object.assign({}, this.bottom_right) };
     }
 }
 

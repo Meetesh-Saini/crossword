@@ -1,14 +1,11 @@
-import localFont from "next/font/local";
-import Tile from "./tile";
-
-const myFont = localFont({ src: "../assets/font/SuperBubble.ttf" });
+import { supperBubble } from "./fonts";
 
 export default function Header() {
     return (
         <>
-            <header className="absolute flex justify-between items-center p-4 text-white w-full">
+            <header className="fixed flex justify-between items-center p-4 text-white w-full">
                 <h1
-                    className={`${myFont.className} text-2xl font-bold bg-gradient-rainbow filter-black`}
+                    className={`${supperBubble.className} text-2xl font-bold bg-gradient-rainbow filter-black`}
                     style={{
                         backgroundClip: "text",
                         WebkitBackgroundClip: "text",
