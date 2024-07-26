@@ -3,19 +3,21 @@ import { valeraRound } from "./fonts";
 
 export default function Tile({
     children,
-    customCSS,
+    customCSS = {},
+    className = "",
+    onClick = () => {},
 }: Readonly<{
     children: React.ReactNode;
-    customCSS?: React.CSSProperties | undefined;
+    customCSS?: React.CSSProperties;
+    className?: string;
+    onClick?: React.MouseEventHandler;
 }>) {
-    if (!customCSS) {
-        customCSS = {};
-    }
     const style = { boxShadow: "1px 1px black", ...customCSS };
     return (
         <div
-            className={`${valeraRound.className} flex m-0 bold text-[1.8rem] text-center justify-center items-center w-14 h-14 bg-white border-4 border-black rounded-lg text-black p-2`}
+            className={`${valeraRound.className} flex m-0 bold text-[1.8rem] text-center justify-center items-center w-14 h-14 bg-white border-4 border-black rounded-lg text-black p-2 ${className}`}
             style={style}
+            onClick={onClick}
         >
             {children}
         </div>

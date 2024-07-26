@@ -18,6 +18,20 @@ const config: Config = {
       filterShadow : {
         black : "drop-shadow(2px 0 #000) drop-shadow(-2px 0 #000) drop-shadow(0 2px #000) drop-shadow(0 -2px #000) drop-shadow(1px 1px #000) drop-shadow(-1px -1px #000) drop-shadow(1px -1px #000) drop-shadow(-1px 1px #000)"
       },
+      keyframes: {
+        beat: {
+          '0%, 100%': { transform: 'scale(1)' },
+          '50%': { transform: 'scale(1.1)' },
+        },
+        'move-top': {
+          '0%': { top: '0' },
+          '100%': { top: '5rem' },
+        },
+      },
+      animation: {
+        beat: 'beat 200ms ease-in-out',
+        'move-top': 'move-top 0.3s ease-in-out',
+      },
     },
   },
   plugins: [

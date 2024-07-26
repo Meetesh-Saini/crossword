@@ -22,9 +22,11 @@ type CrosswordEntry = {
 class Crossword {
     private words: string[];
     private used_words = new Set<string>();
-    private current: CrosswordEntry[] = [];
+    private _current: CrosswordEntry[] = [];
     private top_left: Coords = { x: 0, y: 0 };
     private bottom_right: Coords = { x: 0, y: 0 };
+    private _updated = false;
+    public solved_board: string[][] = [];
 
     constructor(words: string[]) {
         this.words = words;
@@ -49,8 +51,8 @@ class Crossword {
 
     private overlappingWord(word: string, index: number = 0) {
         let set_word = new Set(word);
-        for (let i = index; i < this.current.length; i++) {
-            let element = this.current[i];
+        for (let i = index; i < this._current.length; i++) {
+            let element = this._current[i];
             let intersection = Array.from(element.set).filter((x) => set_word.has(x));
             if (intersection.length != 0) {
                 return {
@@ -139,8 +141,8 @@ class Crossword {
     }
 
     private checkPosition(entry: CrosswordEntry): boolean {
-        for (let index = 0; index < this.current.length; index++) {
-            const element = this.current[index];
+        for (let index = 0; index < this._current.length; index++) {
+            const element = this._current[index];
             // return if not valid
             if (!this.validIntersection(entry, element)) {
                 return false;
@@ -150,7 +152,7 @@ class Crossword {
     }
 
     add(word: string): boolean {
-        if (this.current.length === 0) {
+        if (this._current.length === 0) {
             let newCrosswordEntry: CrosswordEntry = {
                 word: word,
                 dir: Direction.HORIZONTAL,
@@ -162,7 +164,7 @@ class Crossword {
                 set: new Set(word),
             };
 
-            this.current.push(newCrosswordEntry);
+            this._current.push(newCrosswordEntry);
 
             this.top_left = Object.assign({}, newCrosswordEntry.start);
             this.bottom_right = Object.assign({}, newCrosswordEntry.end);
@@ -177,6 +179,8 @@ class Crossword {
                 end: { x: word.length - 1, y: 0 },
                 set: new Set(word),
             });
+
+            this._updated = true;
             return true;
         }
 
@@ -190,7 +194,7 @@ class Crossword {
 
             for (let i = 0; i < match.common.length; i++) {
                 const commonChar = match.common[i];
-                const commonWordEntry = this.current[match.index];
+                const commonWordEntry = this._current[match.index];
                 let matchCharIndex = -1;
                 let wordCharIndex = -1;
 
@@ -242,12 +246,13 @@ class Crossword {
                         console.log("matchCharIndex", matchCharIndex);
 
                         if (validEntry) {
-                            this.current.push(newCrosswordEntry);
+                            this._current.push(newCrosswordEntry);
                             console.log("valid");
                             this.top_left.x = Math.min(this.top_left.x, newCrosswordEntry.start.x);
                             this.top_left.y = Math.max(this.top_left.y, newCrosswordEntry.start.y);
                             this.bottom_right.x = Math.max(this.bottom_right.x, newCrosswordEntry.end.x);
                             this.bottom_right.y = Math.min(this.bottom_right.y, newCrosswordEntry.end.y);
+                            this._updated = true;
                             return true;
                         }
                     }
@@ -261,7 +266,7 @@ class Crossword {
     }
 
     make() {
-        while (this.current.length != 10) {
+        while (this._current.length != 10) {
             let word = this.getRandWord();
             this.add(word);
         }
@@ -269,9 +274,11 @@ class Crossword {
 
     clear() {
         this.used_words = new Set<string>();
-        this.current = [];
+        this._current = [];
         this.top_left = { x: 0, y: 0 };
         this.bottom_right = { x: 0, y: 0 };
+        this._updated = false;
+        this.solved_board = [];
     }
 
     show(): string[][] {
@@ -280,8 +287,8 @@ class Crossword {
 
         let board = [...Array(m)].map((_) => Array<string>(n).fill(" "));
 
-        for (let i = 0; i < this.current.length; i++) {
-            const element = this.current[i];
+        for (let i = 0; i < this._current.length; i++) {
+            const element = this._current[i];
             for (let j = 0; j < element.word.length; j++) {
                 const char = element.word[j];
 
@@ -293,7 +300,8 @@ class Crossword {
         }
 
         let display = board.map((x) => x.join(" ")).join("\n");
-
+        this.solved_board = board;
+        this._updated = false;
         console.log(board);
         console.log(this.top_left);
         console.log(this.bottom_right);
@@ -308,8 +316,8 @@ class Crossword {
 
         let board = [...Array(m)].map((_) => Array<string>(n).fill(" "));
 
-        for (let i = 0; i < this.current.length; i++) {
-            const element = this.current[i];
+        for (let i = 0; i < this._current.length; i++) {
+            const element = this._current[i];
             let choose = Math.floor(Math.random() * 2) + 1;
             for (let j = 0; j < element.word.length; j++) {
                 const char = element.word[j];
@@ -318,7 +326,6 @@ class Crossword {
                 const col = element.start.x - this.top_left.x + +(Direction.HORIZONTAL == element.dir) * j;
 
                 board[row][col] = choose ? "#" : char;
-                console.log(choose);
                 choose = !choose ? Math.floor(Math.random() * 2) + 1 : --choose;
             }
         }
@@ -330,8 +337,8 @@ class Crossword {
     }
 
     check(word: string): CrosswordEntry | null {
-        for (let index = 0; index < this.current.length; index++) {
-            const element = this.current[index];
+        for (let index = 0; index < this._current.length; index++) {
+            const element = this._current[index];
             if (element.word == word) return element;
         }
         return null;
@@ -340,10 +347,25 @@ class Crossword {
     getCorners(): { topleft: Coords; bottomright: Coords } {
         return { topleft: Object.assign({}, this.top_left), bottomright: Object.assign({}, this.bottom_right) };
     }
+
+    get updated() {
+        return this._updated;
+    }
+
+    get solvedBoard() {
+        if (this._updated) {
+            return this.show();
+        }
+        return this.solved_board;
+    }
+
+    get current() {
+        return this._current;
+    }
 }
 
 export { Direction, Crossword };
-
+export type { CrosswordEntry };
 /**
  *          b
  *          a p p l e

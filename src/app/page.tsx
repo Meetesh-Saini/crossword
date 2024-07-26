@@ -3,8 +3,9 @@
 import AnswerBar from "@/components/answerbar";
 import Header from "@/components/header";
 import Tile from "@/components/tile";
-import { Crossword, Direction } from "@/utils/algo";
-import { useRef, useState } from "react";
+import { Crossword, CrosswordEntry, Direction } from "@/utils/algo";
+import { delay, MainContext, Mode, ModeContext, TileColors } from "@/utils/helper";
+import { useEffect, useRef, useState } from "react";
 
 export default function Home() {
     const supported_lists = {
@@ -13,6 +14,9 @@ export default function Home() {
     const BOARD = useRef<Crossword | null>(null);
     const [wordlist, setWordlist] = useState(supported_lists["English"]);
     const [displayBoard, setDisplayBoard] = useState<string[][]>([]);
+    const [animatedTile, setAnimatedTile] = useState<{ row: number; col: number } | null>(null);
+    const [cursor, setCursor] = useState("");
+    const [mode, setMode] = useState<Mode>(Mode.NORMAL);
 
     if (BOARD.current === null) {
         fetch("https://raw.githubusercontent.com/Meetesh-Saini/words/main/link.json", {
@@ -34,7 +38,7 @@ export default function Home() {
             });
     }
 
-    const checkWord = (word: string) => {
+    const checkWord = async (word: string) => {
         let result = BOARD.current?.check(word);
         let corners = BOARD.current?.getCorners();
 
@@ -46,31 +50,108 @@ export default function Home() {
                 const row = corners.topleft.y - result.start.y + +(Direction.VERTICAL == result.dir) * i;
                 const col = result.start.x - corners.topleft.x + +(Direction.HORIZONTAL == result.dir) * i;
 
-                newBoard[row][col] = char;
+                newBoard[row][col] = char + "+";
+                setAnimatedTile({ row, col });
+                setDisplayBoard(newBoard);
+                await delay(150);
             }
-            setDisplayBoard(newBoard);
+            setAnimatedTile(null);
         }
     };
 
+    const viewTile = (row: number, col: number) => {
+        if (displayBoard[row][col].length != 1 || displayBoard[row][col] != "#") return;
+
+        const newBoard = displayBoard.map((row) => [...row]);
+        const currentBoard = BOARD.current?.solvedBoard;
+        newBoard[row][col] = currentBoard![row][col] + "-";
+        setDisplayBoard(newBoard);
+    };
+
+    const viewAll = async () => {
+        if (!BOARD.current || !BOARD.current.current) return;
+
+        let corners = BOARD.current.getCorners();
+        const newBoard = displayBoard.map((row) => [...row]);
+        for (let i = 0; i < BOARD.current.current.length; i++) {
+            const element: CrosswordEntry = BOARD.current.current[i];
+            for (let j = 0; j < element.word.length; j++) {
+                const char = element.word[j];
+
+                const row = corners.topleft.y - element.start.y + +(Direction.VERTICAL == element.dir) * j;
+                const col = element.start.x - corners.topleft.x + +(Direction.HORIZONTAL == element.dir) * j;
+
+                newBoard[row][col] = char + "+";
+                setAnimatedTile({ row, col });
+                setDisplayBoard(newBoard);
+                await delay(150);
+            }
+        }
+        setAnimatedTile(null);
+    };
+
+    const handleMode = () => {
+        switch (mode) {
+            case Mode.NORMAL:
+                setCursor("");
+                break;
+
+            case Mode.PENCIL:
+                setCursor("pencil-cursor");
+                break;
+            default:
+                break;
+        }
+    };
+
+    useEffect(() => {
+        handleMode();
+    }, [mode]);
+
     return (
         <>
-            <Header />
-            <AnswerBar checkWord={checkWord} />
-            <main className="min-h-screen pt-24 pb-28 overflow-scroll">
-                <div className="flex p-16 w-fit m-auto">
-                    {displayBoard.map((row) => (
-                        <>
-                            <div>
-                                {row.map((val) => (
-                                    <Tile customCSS={val != " " ? {} : { visibility: "hidden" }}>
-                                        {val == "#" ? " " : val}
-                                    </Tile>
-                                ))}
-                            </div>
-                        </>
-                    ))}
-                </div>
-            </main>
+            <MainContext.Provider value={{ viewAll: viewAll }}>
+                <ModeContext.Provider value={{ mode: mode, setMode: setMode }}>
+                    <Header />
+                    <AnswerBar checkWord={checkWord} />
+                    <main className={`min-h-screen pt-24 pb-28 overflow-scroll ${cursor}`}>
+                        <div className="flex p-16 w-fit m-auto">
+                            {displayBoard.map((row, rowIndex) => (
+                                <>
+                                    <div>
+                                        {row.map((val, colIndex) => (
+                                            <Tile
+                                                key={`${rowIndex}-${colIndex}`}
+                                                customCSS={{
+                                                    visibility: val === " " ? "hidden" : "visible",
+                                                    backgroundColor:
+                                                        val.length >= 2 && TileColors[val[1]]
+                                                            ? TileColors[val[1]]
+                                                            : "white",
+                                                }}
+                                                className={
+                                                    animatedTile &&
+                                                    animatedTile.row === rowIndex &&
+                                                    animatedTile.col === colIndex
+                                                        ? "animate-beat"
+                                                        : ""
+                                                }
+                                                onClick={() => {
+                                                    if (mode == Mode.PENCIL) {
+                                                        viewTile(rowIndex, colIndex);
+                                                    }
+                                                }}
+                                            >
+                                                {val == "#" ? " " : val[0]}
+                                            </Tile>
+                                        ))}
+                                    </div>
+                                </>
+                            ))}
+                        </div>
+                    </main>
+                </ModeContext.Provider>
+            </MainContext.Provider>
         </>
     );
 }

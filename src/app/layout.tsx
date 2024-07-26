@@ -25,7 +25,7 @@ export default function RootLayout({
                     backgroundRepeat: "no-repeat",
                 }}
             >
-                <div className="absolute inset-0 bg-black opacity-20"></div>
+                <div className="fixed inset-0 bg-black opacity-20"></div>
                 <div className="relative z-10">{children}</div>
             </body>
         </html>
