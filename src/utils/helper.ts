@@ -18,9 +18,9 @@ interface MainContextType {
 }
 
 interface DisplayEntry {
-    value: string
-    modifier: string
-    index: number
+    value: string;
+    modifier: string;
+    index: number;
 }
 
 const ModeContext = React.createContext<ModeContextType | undefined>(undefined);
@@ -33,7 +33,11 @@ const TileColors: { [key: string]: string } = {
 
 const MainContext = React.createContext<MainContextType | undefined>(undefined);
 
-function stringEntryToDisplayEntry(board: string[][], BOARD: CrosswordEntry[], corners: { topleft: Coords; bottomright: Coords }): DisplayEntry[][] {
+function stringEntryToDisplayEntry(
+    board: string[][],
+    BOARD: CrosswordEntry[],
+    corners: { topleft: Coords; bottomright: Coords }
+): DisplayEntry[][] {
     let displayArray: DisplayEntry[][] = [];
     for (let i = 0; i < board.length; i++) {
         let temp: DisplayEntry[] = [];

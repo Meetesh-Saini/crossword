@@ -4,7 +4,15 @@ import AnswerBar from "@/components/answerbar";
 import Header from "@/components/header";
 import Tile from "@/components/tile";
 import { Crossword, CrosswordEntry, Direction } from "@/utils/algo";
-import { delay, MainContext, Mode, ModeContext, TileColors, DisplayEntry, stringEntryToDisplayEntry } from "@/utils/helper";
+import {
+    delay,
+    MainContext,
+    Mode,
+    ModeContext,
+    TileColors,
+    DisplayEntry,
+    stringEntryToDisplayEntry,
+} from "@/utils/helper";
 import { useEffect, useRef, useState } from "react";
 
 export default function Home() {
@@ -33,7 +41,13 @@ export default function Home() {
                         BOARD.current = new Crossword(words.split("\n"));
                         BOARD.current.make();
                         BOARD.current.show();
-                        setDisplayBoard(stringEntryToDisplayEntry(BOARD.current.randomize(), BOARD.current.current, BOARD.current.getCorners()));
+                        setDisplayBoard(
+                            stringEntryToDisplayEntry(
+                                BOARD.current.randomize(),
+                                BOARD.current.current,
+                                BOARD.current.getCorners()
+                            )
+                        );
                     });
             });
     }
@@ -65,7 +79,7 @@ export default function Home() {
 
         const newBoard = displayBoard.map((row) => [...row]);
         const currentBoard = BOARD.current?.solvedBoard;
-        newBoard[row][col].value = currentBoard![row][col]
+        newBoard[row][col].value = currentBoard![row][col];
         newBoard[row][col].modifier = "-";
         setDisplayBoard(newBoard);
     };
@@ -134,8 +148,8 @@ export default function Home() {
                                                 }}
                                                 className={
                                                     animatedTile &&
-                                                        animatedTile.row === rowIndex &&
-                                                        animatedTile.col === colIndex
+                                                    animatedTile.row === rowIndex &&
+                                                    animatedTile.col === colIndex
                                                         ? "animate-beat"
                                                         : ""
                                                 }

@@ -21,9 +21,14 @@ export default function AnswerBar({ checkWord }: { checkWord: (word: string) => 
                 <div
                     className={`${valeraRound.className} flex border-4 border-l-0 rounded-l-none border-black rounded-xl overflow-hidden text-black text-xl`}
                 >
-                    <form onSubmit={(e) => { e.preventDefault(); handleCheck(); }}>
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            handleCheck();
+                        }}
+                    >
                         <input
-                            className="w-60 h-full p-2 rounded-sm  outline-none"
+                            className="w-60 h-full p-2 rounded-sm outline-none"
                             type="text"
                             value={inputValue}
                             onChange={handleInput}
