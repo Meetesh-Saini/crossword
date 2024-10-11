@@ -365,7 +365,7 @@ class Crossword {
 }
 
 export { Direction, Crossword };
-export type { CrosswordEntry };
+export type { CrosswordEntry, Coords };
 /**
  *          b
  *          a p p l e

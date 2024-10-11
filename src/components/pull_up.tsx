@@ -51,7 +51,6 @@ export default function PullUp() {
                     className={`absolute ${open ? "-top-[54px]" : "top-0"} transition-[top] duration-100 ${!open ? "duration-100" : "duration-200"}`}
                     onClick={() => {
                         mode != Mode.PENCIL ? setMode(Mode.PENCIL) : setMode(Mode.NORMAL);
-                        console.log("pressed");
                     }}
                 >
                     <svg

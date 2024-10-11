@@ -1,4 +1,4 @@
-import { ChangeEvent, Dispatch, SetStateAction, useState } from "react";
+import { ChangeEvent, Dispatch, FormEvent, SetStateAction, useState } from "react";
 import { valeraRound } from "./fonts";
 import PullUp from "./pull_up";
 import { Mode } from "@/utils/helper";
@@ -21,13 +21,14 @@ export default function AnswerBar({ checkWord }: { checkWord: (word: string) => 
                 <div
                     className={`${valeraRound.className} flex border-4 border-l-0 rounded-l-none border-black rounded-xl overflow-hidden text-black text-xl`}
                 >
-                    <input
-                        className="w-60 p-2 rounded-sm  outline-none"
-                        type="text"
-                        value={inputValue}
-                        onChange={handleInput}
-                        onSubmit={handleCheck}
-                    />
+                    <form onSubmit={(e) => { e.preventDefault(); handleCheck(); }}>
+                        <input
+                            className="w-60 h-full p-2 rounded-sm  outline-none"
+                            type="text"
+                            value={inputValue}
+                            onChange={handleInput}
+                        />
+                    </form>
                     <button onClick={handleCheck} className="w-12 bg-lime-400">
                         <svg
                             className="scale-75"
