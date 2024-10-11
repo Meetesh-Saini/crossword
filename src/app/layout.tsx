@@ -3,10 +3,10 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
-const baseURL = "crossword"
+const baseURL = "/crossword";
 
 export const metadata: Metadata = {
-    title: "Crossword | by Meetesh 😄",
+    title: "Crossword | by Meetesh <(^_^)>",
     description: "Crossword game with hints support",
 };
 
@@ -20,7 +20,7 @@ export default function RootLayout({
             <body
                 className={inter.className}
                 style={{
-                    backgroundImage: `url(/${baseURL}/back_0.png)`,
+                    backgroundImage: `url(${baseURL}/back_0.png)`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                     backgroundRepeat: "no-repeat",

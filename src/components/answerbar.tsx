@@ -1,17 +1,18 @@
 import { ChangeEvent, Dispatch, FormEvent, SetStateAction, useState } from "react";
 import { valeraRound } from "./fonts";
 import PullUp from "./pull_up";
-import { Mode } from "@/utils/helper";
 
-export default function AnswerBar({ checkWord }: { checkWord: (word: string) => void }) {
+export default function AnswerBar({ checkWord }: { checkWord: (word: string) => Promise<boolean> }) {
     const [inputValue, setInputValue] = useState<string>("");
 
     const handleInput = (e: ChangeEvent<HTMLInputElement>) => {
         setInputValue(e.target.value.toLowerCase());
     };
 
-    const handleCheck = () => {
-        checkWord(inputValue);
+    const handleCheck = async () => {
+        if (await checkWord(inputValue)) {
+            setInputValue("");
+        }
     };
 
     return (

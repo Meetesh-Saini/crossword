@@ -1,6 +1,7 @@
 "use client";
 
 import AnswerBar from "@/components/answerbar";
+import Dialog from "@/components/dialog";
 import Header from "@/components/header";
 import Tile from "@/components/tile";
 import { Crossword, CrosswordEntry, Direction } from "@/utils/algo";
@@ -13,7 +14,8 @@ import {
     DisplayEntry,
     stringEntryToDisplayEntry,
 } from "@/utils/helper";
-import { useEffect, useRef, useState } from "react";
+import { Meaning } from "@/utils/meaning";
+import React, { useEffect, useRef, useState } from "react";
 
 export default function Home() {
     const supported_lists = {
@@ -25,6 +27,9 @@ export default function Home() {
     const [animatedTile, setAnimatedTile] = useState<{ row: number; col: number } | null>(null);
     const [cursor, setCursor] = useState("");
     const [mode, setMode] = useState<Mode>(Mode.NORMAL);
+    const [dialogContent, setDialogContent] = useState<React.ReactNode>("Loading...");
+    const [dialogHeading, setDialogHeading] = useState<string>("Meaning");
+    const [showDialog, setShowDialog] = useState(false);
 
     if (BOARD.current === null) {
         fetch("https://raw.githubusercontent.com/Meetesh-Saini/words/main/link.json", {
@@ -71,7 +76,9 @@ export default function Home() {
                 await delay(150);
             }
             setAnimatedTile(null);
+            return true;
         }
+        return false;
     };
 
     const viewTile = (row: number, col: number) => {
@@ -121,6 +128,12 @@ export default function Home() {
         }
     };
 
+    const showMeaning = (index: number) => {
+        setDialogHeading("Meaning");
+        setDialogContent(<Meaning word={BOARD.current?.current[index].word!} />);
+        setShowDialog(true);
+    };
+
     useEffect(() => {
         handleMode();
     }, [mode]);
@@ -132,6 +145,13 @@ export default function Home() {
                     <Header />
                     <AnswerBar checkWord={checkWord} />
                     <main className={`min-h-screen pt-24 pb-28 ${cursor}`}>
+                        {showDialog ? (
+                            <Dialog setShowDialog={setShowDialog} heading={dialogHeading}>
+                                {dialogContent}
+                            </Dialog>
+                        ) : (
+                            <></>
+                        )}
                         <div className="flex p-16 w-fit m-auto">
                             {displayBoard.map((row, rowIndex) => (
                                 <>
@@ -156,6 +176,8 @@ export default function Home() {
                                                 onClick={() => {
                                                     if (mode == Mode.PENCIL) {
                                                         viewTile(rowIndex, colIndex);
+                                                    } else if (mode == Mode.NORMAL) {
+                                                        showMeaning(val.index);
                                                     }
                                                 }}
                                             >

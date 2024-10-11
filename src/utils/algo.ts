@@ -168,18 +168,6 @@ class Crossword {
 
             this.top_left = Object.assign({}, newCrosswordEntry.start);
             this.bottom_right = Object.assign({}, newCrosswordEntry.end);
-
-            console.log({
-                word: word,
-                dir: Direction.HORIZONTAL,
-                match: "",
-                at: 0,
-                from: 0,
-                start: { x: 0, y: 0 },
-                end: { x: word.length - 1, y: 0 },
-                set: new Set(word),
-            });
-
             this._updated = true;
             return true;
         }
@@ -232,22 +220,8 @@ class Crossword {
                         };
                         let validEntry = this.checkPosition(newCrosswordEntry);
 
-                        console.log({
-                            word: word,
-                            dir: direction,
-                            at: matchCharIndex,
-                            from: wordCharIndex,
-                            match: commonWordEntry.word,
-                            start: start,
-                            end: end,
-                            set: new Set(word),
-                        });
-                        console.log("wordCharIndex", wordCharIndex);
-                        console.log("matchCharIndex", matchCharIndex);
-
                         if (validEntry) {
                             this._current.push(newCrosswordEntry);
-                            console.log("valid");
                             this.top_left.x = Math.min(this.top_left.x, newCrosswordEntry.start.x);
                             this.top_left.y = Math.max(this.top_left.y, newCrosswordEntry.start.y);
                             this.bottom_right.x = Math.max(this.bottom_right.x, newCrosswordEntry.end.x);
@@ -302,11 +276,6 @@ class Crossword {
         let display = board.map((x) => x.join(" ")).join("\n");
         this.solved_board = board;
         this._updated = false;
-        console.log(board);
-        console.log(this.top_left);
-        console.log(this.bottom_right);
-        console.log(display);
-
         return board;
     }
 
@@ -329,10 +298,6 @@ class Crossword {
                 choose = !choose ? Math.floor(Math.random() * 2) + 1 : --choose;
             }
         }
-        let display = board.map((x) => x.join(" ")).join("\n");
-        console.log(this.top_left);
-        console.log(this.bottom_right);
-        console.log(display);
         return board;
     }
 
